@@ -29,7 +29,7 @@ except Exception as err:
     print("Error al abrir el puerto:", err)
     raise SystemExit
 
-# Incializacion del hilo de comunicacion
+# Incializacion del hilo de lectura
 hilo_lectura = threading.Thread(target=leer_serial, args=(puerto_serial,), daemon=True)
 hilo_lectura.start()
 
