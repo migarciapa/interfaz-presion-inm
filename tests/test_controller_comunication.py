@@ -30,7 +30,6 @@ class WidgetSerial(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Controller Comunication")
-        #self.setStyleSheet("background-color: #5A9BD5; color: #1E1E1E;")
 
         # Creacion de elementos
         self.label_window = QtWidgets.QLabel("Ventana:")
