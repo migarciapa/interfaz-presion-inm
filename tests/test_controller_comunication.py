@@ -5,6 +5,7 @@
 # --- LIBRERIAS ---
 from PyQt6 import QtCore, QtWidgets, QtSerialPort, QtGui
 import sys
+import time
 
 # --- CONFIGURACION ---
 PORT_NAME = 'COM6'
@@ -64,6 +65,9 @@ class WidgetSerial(QtWidgets.QWidget):
             print("No se pudo abrir el puerto serial.")
             print("Error:", self.serial.errorString())
 
+        # Creacion del buffer de lectura
+        self.buffer = bytes()
+
         # Conectar las funciones de elementos
         self.button_read.clicked.connect(self.send_read_command)
         self.button_write.clicked.connect(self.send_write_command)
@@ -88,9 +92,10 @@ class WidgetSerial(QtWidgets.QWidget):
     
     # Funcion para la recepcion del serial
     def recive_serial_data(self):
-        while self.serial.canReadLine():
-            message = bytes(self.serial.readLine())
-            print("<<", message)
+        while self.serial.bytesAvailable():
+            self.buffer += bytes(self.serial.readAll())
+        print("<<", self.buffer)
+        self.buffer = bytes()
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":
