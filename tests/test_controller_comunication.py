@@ -5,10 +5,9 @@
 # --- LIBRERIAS ---
 from PyQt6 import QtCore, QtWidgets, QtSerialPort, QtGui
 import sys
-import time
 
 # --- CONFIGURACION ---
-PORT_NAME = 'COM6'
+PORT_NAME = 'COM4'
 BAUDRATE = 9600
 ADDR = b'\x80'
 
@@ -94,8 +93,10 @@ class WidgetSerial(QtWidgets.QWidget):
     def recive_serial_data(self):
         while self.serial.bytesAvailable():
             self.buffer += bytes(self.serial.readAll())
-        print("<<", self.buffer)
-        self.buffer = bytes()
+        if len(self.buffer) >= 3:
+            if b'\x03' in self.buffer[:-2]:
+                print("<<", self.buffer)
+                self.buffer = bytes()
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":
