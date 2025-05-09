@@ -1,0 +1,28 @@
+VENTANAS IMPORTANTES
+
+000 | Prendido apagado (0,1)
+100   Inicio sUAVE DE LA BOMBA (1 = si)
+120   Ajuste de frecuencia (1100,1167)
+143   Ventilador prenidod siempre =0 autamatico =1
+157   Gas cargado N2=0 Ar=1
+163   Configuracion unidades de presion
+181   Gas medida (consultar)
+200   Lectura corriente
+201   Lectura voltaje
+202   Lectrua potencia
+203   Lectura frecuencia
+204   Lectrua temperatura
+205   Lectrua estado de la bomba (estados 0-6)
+224   Lectura de la presion (mirar decimales o formato)
+257   Estado del gauge
+300   Tiempo activo de la bomba (min)
+301   Ciclo de encendido #X
+302   Tiempo activo total de la bomba (horas)
+
+EL PROGRAMA DEBE PROCESAR TAMBIEN LOS MENSAJES DE FALLO
+
+CONSULTAR
+107
+110
+177
+
