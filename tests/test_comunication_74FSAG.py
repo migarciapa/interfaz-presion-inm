@@ -1,4 +1,4 @@
-# === [PRUEBA DE COMUNCACION CONTROLADOR TWISTORR 74FS AG] ===
+# === [PRUEBA DE COMUNCACION CONTROLADOR TWISTORR 74FSAG] ===
 # David Miguel Garcia Palacios
 # Universidad Nacional de Colombia Sede Bogota
 

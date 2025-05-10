@@ -18,10 +18,10 @@ Este repositorio contendrá el código fuente, la documentación técnica, infor
   - `TwisTorr 74 FS AG Rack Controller.pdf` - Manual de usuario de Agilent del controlador 74-FSAG
   - `XGS-600 Gauge Controller.pdf` - Manual de usuario de Agilent del controlador XGS-600
 - `tests/` - Scripts de preuba en python y c++ para arduino
-  - `Arduino_Serial_Tester/` - Script de simualcion de comunicacion serial con Arduino UNO a 9600 baudios
+  - `arduino_serial_tester/` - Script en carpeta requerida para simualcion de comunicacion serial con Arduino UNO a 9600 baudios
   - `gui_elements_visualizer.py` - Script de preuba de visualicacion de elementos graficos de PyQt6
-  - `test_controller_comunication.py` - Script de preuba de comunicacion de controlador 74-FSAG
-  -  `test_serial.py` - Script de preuba de comunicacion de serial general por consola de Python
+  - `test_comunication_74FSAG.py` - Script de preuba de comunicacion de controlador 74-FSAG
+  - `test_serial.py` - Script de preuba de comunicacion de serial general por consola de Python
 -  `README.md` - Descripcion y documentacion general del proyecto
 
 ## Bitacora de trabajo
