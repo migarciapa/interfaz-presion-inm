@@ -10,7 +10,7 @@ from PyQt6 import QtWidgets, QtSerialPort, QtCore
 class ToolXGS600(QtWidgets.QWidget):
     
     # [Constructor]
-    def __init__(self, port_name: str = "COM5"):
+    def __init__(self, port_name: str = "COM4"):
         super().__init__()
         self.setWindowTitle("Herramienta XGS600")
 
@@ -49,14 +49,14 @@ class ToolXGS600(QtWidgets.QWidget):
     
     # [Recepcion de mensajes del serial]
     def recive_serial_data(self):
-        self.buffer += self.serial.readAll()
-        if True:
-            self.text_console.appendPlainText("".join(map(str, [">>", self.buffer])))
+        self.buffer += bytes(self.serial.readAll())
+        if b'\r' in self.buffer:
+            self.text_console.appendPlainText("".join(map(str, ["<<", self.buffer])))
             self.buffer = bytes()
     
     # [Envio de mensajes del serial]
     def send_command(self):
-        message = self.input_command.text().encode()
+        message = (self.input_command.text() + "\r").encode()
         self.serial.write(message)
         self.text_console.appendPlainText("".join(map(str, [">>", message])))
 

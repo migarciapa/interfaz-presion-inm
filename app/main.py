@@ -27,8 +27,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_panel = QtWidgets.QTabWidget()
 
         # Creacion de herramientas
-        self.widget_74FSAG = Tool74FSAG()
-        self.widget_XGS600 = ToolXGS600()
+        self.widget_74FSAG = Tool74FSAG("COM4")
+        self.widget_XGS600 = ToolXGS600("COM5")
         self.widget_plot = pyqtgraph.PlotWidget()
 
         # Ubicacion y enlazado de elementos
