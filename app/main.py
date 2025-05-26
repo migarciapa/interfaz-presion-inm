@@ -4,8 +4,8 @@
 
 # [Librerias de Terceros]
 import sys
+import pyqtgraph
 from PyQt6 import QtWidgets
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as MpFigureCanvas
 
 # [Clases de herramientas]
 from Tool_74FSAG import Tool74FSAG
@@ -29,23 +29,22 @@ class MainWindow(QtWidgets.QMainWindow):
         # Creacion de herramientas
         self.widget_74FSAG = Tool74FSAG()
         self.widget_XGS600 = ToolXGS600()
-        self.widget_graph = MpFigureCanvas()
-        self.plot_graph = self.widget_graph.figure.add_subplot()
+        self.widget_plot = pyqtgraph.PlotWidget()
 
         # Ubicacion y enlazado de elementos
         self.setCentralWidget(self.widget_main)
         self.widget_main.setLayout(self.layout_main)
         self.layout_main.addWidget(self.splitter)
         self.splitter.addWidget(self.tab_panel)
-        self.splitter.addWidget(self.widget_graph)
+        self.splitter.addWidget(self.widget_plot)
         self.tab_panel.addTab(self.widget_74FSAG, "74FSAG")
         self.tab_panel.addTab(self.widget_XGS600, "XGS600")
 
         # Configuracion inicial de elementos
         self.splitter.setStretchFactor(0, 0)
         self.splitter.setStretchFactor(1, 1)
-        self.widget_graph.figure.tight_layout()
-        self.plot_graph.plot([1,2,3],[1,4,9])
+        self.widget_plot.setBackground(None)
+        self.widget_plot.plot([1, 2, 3, 4], [10, 20, 15, 30])
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":

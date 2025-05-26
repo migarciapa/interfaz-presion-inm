@@ -10,7 +10,7 @@ from PyQt6 import QtWidgets, QtSerialPort, QtCore
 class ToolXGS600(QtWidgets.QWidget):
     
     # [Constructor]
-    def __init__(self, port_name: str = "COM4"):
+    def __init__(self, port_name: str = "COM5"):
         super().__init__()
         self.setWindowTitle("Herramienta XGS600")
 
@@ -24,10 +24,9 @@ class ToolXGS600(QtWidgets.QWidget):
         self.serial.setStopBits(QtSerialPort.QSerialPort.StopBits.OneStop)
         self.serial.setFlowControl(QtSerialPort.QSerialPort.FlowControl.NoFlowControl)
         if self.serial.open(QtCore.QIODevice.OpenModeFlag.ReadWrite):
-            print("Puerto serial abierto correctamente!")
+            print("[XGS600] Puerto serial abierto correctamente!")
         else:
-            print("No se pudo abrir el puerto serial.")
-            print("Error:", self.serial.errorString())
+            print("[XGS600] No se pudo abrir el puerto serial. Error:", self.serial.errorString())
 
         # Creacion de elementos
         self.input_command = QtWidgets.QLineEdit()
