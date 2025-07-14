@@ -6,6 +6,9 @@
 import sys
 from PyQt6 import QtWidgets, QtSerialPort, QtCore 
 
+# [Clases a importar]
+from Class_DataWindow import DataWindow
+
 # --- HERRAMIENTA 74FSAG ---
 class Tool74FSAG(QtWidgets.QWidget):
     
@@ -28,7 +31,13 @@ class Tool74FSAG(QtWidgets.QWidget):
         else:
             print("[74FSAG] No se pudo abrir el puerto serial. Error:", self.serial.errorString())
 
-        # Creacion de elementos
+        # Creacion del diccionario de ventanas para el mapeo de datos
+        self.dict_windows = {
+            000: DataWindow("Maquina encendida", DataWindow.decode_bool),
+            100: DataWindow("Arranque suave", DataWindow.decode_bool),
+        }
+
+        # Creacion de elementos graficos
         self.button_pump_start = QtWidgets.QPushButton("Encendido")
         self.button_pump_stop = QtWidgets.QPushButton("Apagado")
         self.checkbox_soft_start = QtWidgets.QCheckBox()
@@ -45,6 +54,13 @@ class Tool74FSAG(QtWidgets.QWidget):
         self.layout_form.addRow(self.slider_frequency)
 
         # Configuracion inicial de elementos
+
+        # Conexion de las funciones a elementos
+        self.button_pump_start.clicked.connect(self.error_message)
+    
+    # [Funcion cliked del boton]
+    def error_message(self):
+        QtWidgets.QMessageBox.critical(self, "Error", "No se pudo conectar con el dispositivo.")
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":
