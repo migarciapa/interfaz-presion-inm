@@ -42,7 +42,7 @@ try:
             break
         puerto_serial.write((comando + "\n").encode("ascii"))
 except KeyboardInterrupt:
-    print("nterrupción detectada. Cerrando comunicacion...")
+    print("Interrupción detectada. Cerrando comunicacion...")
 finally:
     puerto_serial.close()
     

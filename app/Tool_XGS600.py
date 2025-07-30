@@ -4,7 +4,8 @@
 
 # [Librerias de Terceros]
 import sys
-from PyQt6 import QtWidgets, QtSerialPort, QtCore
+import time
+from PyQt6 import QtWidgets, QtSerialPort, QtCore, QtGui
 
 # --- HERRAMIENTA XGS600 ---
 class ToolXGS600(QtWidgets.QWidget):
@@ -27,38 +28,102 @@ class ToolXGS600(QtWidgets.QWidget):
             print("[XGS600] Puerto serial abierto correctamente!")
         else:
             print("[XGS600] No se pudo abrir el puerto serial. Error:", self.serial.errorString())
+        
+        # Creacion de timer para bucle
+        self.timer_bucle = QtCore.QTimer()
+        self.timer_bucle.timeout.connect(self.bucle_rutine)
 
-        # Creacion de elementos
+        # Creacion y configuracion inicial de elementos
+        self.slider_time = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
+        self.slider_time.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
+        self.slider_time.setMinimum(1)
+        self.slider_time.setMaximum(60)
+        self.slider_time.setTickInterval(10)
+        self.slider_time.setValue(1)
+
+        self.label_sensor_1 = QtWidgets.QLabel("--")
+        self.label_sensor_1.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_1.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        self.label_sensor_2 = QtWidgets.QLabel("--")
+        self.label_sensor_2.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_2.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        self.label_sensor_3 = QtWidgets.QLabel("--")
+        self.label_sensor_3.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_3.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+        self.label_sensor_4 = QtWidgets.QLabel("--")
+        self.label_sensor_4.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_4.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
+
         self.input_command = QtWidgets.QLineEdit()
         self.button_command = QtWidgets.QPushButton("Enviar")
         self.text_console = QtWidgets.QPlainTextEdit()
+        self.text_console.setReadOnly(True)
         
         # Ubicacion y enlazado de elementos
         self.layout_main = QtWidgets.QFormLayout()
         self.setLayout(self.layout_main)
+        self.layout_main.addRow("Intervalo de Lectura", self.slider_time)
+        self.layout_main.addRow("Sensor en [T1]: ", self.label_sensor_1)
+        self.layout_main.addRow("Sensor en [T2]: ", self.label_sensor_2)
+        self.layout_main.addRow("Sensor en [T3]: ", self.label_sensor_3)
+        self.layout_main.addRow("Sensor en [T4]: ", self.label_sensor_4)
         self.layout_main.addRow("Comando ASCII", self.input_command)
         self.layout_main.addRow(self.button_command)
         self.layout_main.addRow(self.text_console)
 
-        # Configuracion inicial de elementos
-        self.text_console.setReadOnly(True)
-
         # Conexion de las funciones a elementos
+        self.slider_time.valueChanged.connect(lambda x: self.show_tooltip(x,"s"))
+        self.slider_time.valueChanged.connect(lambda x: self.timer_bucle.setInterval(x * 1000))
         self.serial.readyRead.connect(self.recive_serial_data)
         self.button_command.clicked.connect(self.send_command)
-    
+
+        # Inicia el timer de bucle de lectura presion
+        self.timer_bucle.start(self.slider_time.value() * 1000)
+        
+    # [Funcion del timer bucle]
+    def bucle_rutine(self):
+        self.serial.write(("#000F\r").encode())
+
     # [Recepcion de mensajes del serial]
     def recive_serial_data(self):
         self.buffer += bytes(self.serial.readAll())
         if b'\r' in self.buffer:
-            self.text_console.appendPlainText("".join(map(str, ["<<", self.buffer])))
+            try:
+                line = self.buffer.decode(errors = "ignore").strip()
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Error en la decodificacion", e)
+                self.buffer = bytes()
+                return
+            self.text_console.appendPlainText(line)
             self.buffer = bytes()
+
+            # Conversion a datos presion
+            if "," in line:
+                line = line[1:].split(",")
+                values = []
+                for item in line:
+                    item = item.strip()
+                    try:
+                        values.append(float(item))
+                    except ValueError:
+                        values.append(item)
+                try:
+                    self.label_sensor_1.setText(str(values[0]))
+                    self.label_sensor_2.setText(str(values[1]))
+                    self.label_sensor_3.setText(str(values[2]))
+                    self.label_sensor_4.setText(str(values[3]))
+                except Exception as e:
+                    QtWidgets.QMessageBox.warning(self,"", "Error en el display de valores\n" + str(e))
     
     # [Envio de mensajes del serial]
     def send_command(self):
         message = (self.input_command.text() + "\r").encode()
         self.serial.write(message)
         self.text_console.appendPlainText("".join(map(str, [">>", message])))
+
+    # [Mostrar valor tooltip]
+    def show_tooltip(self, value, unit = ""):
+        QtWidgets.QToolTip.showText(QtGui.QCursor.pos(), str(value) + unit)
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":
