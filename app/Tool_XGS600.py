@@ -9,6 +9,9 @@ from PyQt6 import QtWidgets, QtSerialPort, QtCore, QtGui
 
 # --- HERRAMIENTA XGS600 ---
 class ToolXGS600(QtWidgets.QWidget):
+
+    # Señales de salida
+    signal_preasure = QtCore.pyqtSignal()
     
     # [Constructor]
     def __init__(self, port_name: str = "COM4"):
@@ -46,16 +49,16 @@ class ToolXGS600(QtWidgets.QWidget):
         self.slider_time.setValue(1)
 
         self.label_sensor_1 = QtWidgets.QLabel("--")
-        self.label_sensor_1.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_1.setFont(QtGui.QFont("Courier New", 24, QtGui.QFont.Weight.Bold))
         self.label_sensor_1.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.label_sensor_2 = QtWidgets.QLabel("--")
-        self.label_sensor_2.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_2.setFont(QtGui.QFont("Courier New", 24, QtGui.QFont.Weight.Bold))
         self.label_sensor_2.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.label_sensor_3 = QtWidgets.QLabel("--")
-        self.label_sensor_3.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_3.setFont(QtGui.QFont("Courier New", 24, QtGui.QFont.Weight.Bold))
         self.label_sensor_3.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self.label_sensor_4 = QtWidgets.QLabel("--")
-        self.label_sensor_4.setFont(QtGui.QFont("Courier New", 12, QtGui.QFont.Weight.Bold))
+        self.label_sensor_4.setFont(QtGui.QFont("Courier New", 24, QtGui.QFont.Weight.Bold))
         self.label_sensor_4.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.input_command = QtWidgets.QLineEdit()
@@ -105,21 +108,24 @@ class ToolXGS600(QtWidgets.QWidget):
             # Conversion a datos presion
             if "," in line:
                 line = line[1:].split(",")
+                values = []
                 for item in line:
                     item = item.strip()
                     try:
-                        self.values_preasure.append(float(item))
+                        values.append(float(item))
                     except ValueError:
-                        self.values_preasure.append(np.nan)
+                        values.append(np.nan)
                 
                 # Envia alerta y cambia labels
+                self.values_preasure = values
+                self.signal_preasure.emit()
                 try:
                     self.label_sensor_1.setText(str(self.values_preasure[0]))
                     self.label_sensor_2.setText(str(self.values_preasure[1]))
                     self.label_sensor_3.setText(str(self.values_preasure[2]))
                     self.label_sensor_4.setText(str(self.values_preasure[3]))
                 except Exception as e:
-                    QtWidgets.QMessageBox.warning(self,"", "Error en el display de valores\n" + str(e))
+                    QtWidgets.QMessageBox.warning(self,"", "[XGS600] Error en el display de valores\n" + str(e))
     
     # [Envio de mensajes del serial]
     def send_command(self):
