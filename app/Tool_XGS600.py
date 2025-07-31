@@ -4,7 +4,7 @@
 
 # [Librerias de Terceros]
 import sys
-import time
+import numpy as np
 from PyQt6 import QtWidgets, QtSerialPort, QtCore, QtGui
 
 # --- HERRAMIENTA XGS600 ---
@@ -14,6 +14,10 @@ class ToolXGS600(QtWidgets.QWidget):
     def __init__(self, port_name: str = "COM4"):
         super().__init__()
         self.setWindowTitle("Herramienta XGS600")
+
+        # Creacion array de datos presion y alerta
+        self.values_preasure = []
+        self.timestamp = None
 
         # Creacion del puerto serial y buffer de comunicacion
         self.buffer = bytes()
@@ -94,24 +98,26 @@ class ToolXGS600(QtWidgets.QWidget):
                 QtWidgets.QMessageBox.critical(self, "Error en la decodificacion", e)
                 self.buffer = bytes()
                 return
+            self.timestamp = np.datetime64("now")
             self.text_console.appendPlainText(line)
             self.buffer = bytes()
 
             # Conversion a datos presion
             if "," in line:
                 line = line[1:].split(",")
-                values = []
                 for item in line:
                     item = item.strip()
                     try:
-                        values.append(float(item))
+                        self.values_preasure.append(float(item))
                     except ValueError:
-                        values.append(item)
+                        self.values_preasure.append(np.nan)
+                
+                # Envia alerta y cambia labels
                 try:
-                    self.label_sensor_1.setText(str(values[0]))
-                    self.label_sensor_2.setText(str(values[1]))
-                    self.label_sensor_3.setText(str(values[2]))
-                    self.label_sensor_4.setText(str(values[3]))
+                    self.label_sensor_1.setText(str(self.values_preasure[0]))
+                    self.label_sensor_2.setText(str(self.values_preasure[1]))
+                    self.label_sensor_3.setText(str(self.values_preasure[2]))
+                    self.label_sensor_4.setText(str(self.values_preasure[3]))
                 except Exception as e:
                     QtWidgets.QMessageBox.warning(self,"", "Error en el display de valores\n" + str(e))
     
