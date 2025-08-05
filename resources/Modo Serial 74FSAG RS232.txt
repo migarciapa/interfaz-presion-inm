@@ -1,0 +1,3 @@
+- Presiona Counters + Measures para acceder al menu
+- Usar next para anvegar
+- Increase Decrease para cambiar valores

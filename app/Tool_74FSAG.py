@@ -11,9 +11,12 @@ from Class_DataWindow import DataWindow
 
 # --- HERRAMIENTA 74FSAG ---
 class Tool74FSAG(QtWidgets.QWidget):
+
+    # Señales de salida
+    signal_preasure = QtCore.pyqtSignal()
     
     # [Constructor]
-    def __init__(self, port_name: str = "COM4"):
+    def __init__(self, port_name: str = "COM6"):
         super().__init__()
         self.setWindowTitle("Herramienta 74FSAG")
 
@@ -37,30 +40,53 @@ class Tool74FSAG(QtWidgets.QWidget):
             100: DataWindow("Arranque suave", DataWindow.decode_bool),
         }
 
-        # Creacion de elementos graficos
+        # Creacion y configuracion de elementos
         self.button_pump_start = QtWidgets.QPushButton("Encendido")
         self.button_pump_stop = QtWidgets.QPushButton("Apagado")
         self.checkbox_soft_start = QtWidgets.QCheckBox()
         self.slider_frequency = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.lcd_frequency = QtWidgets.QLCDNumber()
+
+        self.text_console = QtWidgets.QPlainTextEdit()
+        self.text_console.setReadOnly(True)
         
         # Ubicacion y enlazado de elementos
-        self.layout_form = QtWidgets.QFormLayout()
-        self.setLayout(self.layout_form)
-        self.layout_form.addRow(self.button_pump_start)
-        self.layout_form.addRow(self.button_pump_stop)
-        self.layout_form.addRow("Encendido suave", self.checkbox_soft_start)
-        self.layout_form.addRow("Frecuencia bomba", self.lcd_frequency)
-        self.layout_form.addRow(self.slider_frequency)
-
-        # Configuracion inicial de elementos
+        self.layout_main = QtWidgets.QFormLayout()
+        self.setLayout(self.layout_main)
+        self.layout_main.addRow(self.button_pump_start)
+        self.layout_main.addRow(self.button_pump_stop)
+        self.layout_main.addRow("Encendido suave", self.checkbox_soft_start)
+        self.layout_main.addRow("Frecuencia bomba", self.lcd_frequency)
+        self.layout_main.addRow(self.slider_frequency)
+        self.layout_main.addRow(self.text_console)
 
         # Conexion de las funciones a elementos
-        self.button_pump_start.clicked.connect(self.error_message)
+        self.serial.readyRead.connect(self.recive_serial_data)
     
-    # [Funcion cliked del boton]
-    def error_message(self):
-        QtWidgets.QMessageBox.critical(self, "Error", "No se pudo conectar con el dispositivo.")
+    # [Funcion del timer bucle]
+    def bucle_rutine(self):
+        self.serial.write(b"\x02\x802240\x0387")
+
+    # [Recepcion de mensajes del serial]
+    def recive_serial_data(self):
+        while self.serial.bytesAvailable():
+            self.buffer += bytes(self.serial.readAll())
+        if (len(self.buffer) >= 3) and (b'\x03' in self.buffer[:-2]):
+            try:
+                line = self.buffer.decode(errors = "ignore")
+                line = line[line.find('\x02')+1:line.find('\x03')].strip()
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Error en la decodificacion", e)
+                self.buffer = bytes()
+                return
+            self.text_console.appendPlainText(line)
+            self.buffer = bytes()
+
+            # Conversion a ventana y dato
+            try:
+                if len(line) < 5: raise Exception(repr(line.encode()))
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self,"", "[74FSAG] Respuesta error\n" + str(e))
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":
@@ -72,4 +98,11 @@ if __name__ == "__main__":
     # Muestra la ventana de herramienta
     window = Tool74FSAG()
     window.show()
+
+    # Timer para bucle
+    timer_bucle = QtCore.QTimer()
+    timer_bucle.timeout.connect(window.bucle_rutine)
+    timer_bucle.start(1000)
+    
+    # Salida
     sys.exit(app.exec())

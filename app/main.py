@@ -6,7 +6,7 @@
 import sys
 import pyqtgraph
 import pandas as pd
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 # [Clases de herramientas]
 from Tool_74FSAG import Tool74FSAG
@@ -24,17 +24,21 @@ class MainWindow(QtWidgets.QMainWindow):
         # Creacion de dataframe de presion
         self.dataframe = pd.DataFrame(columns = ["XGS600_T1", "XGS600_T2", "XGS600_T3", "XGS600_T4"])
         self.dataframe.index = pd.to_datetime(self.dataframe.index)
+
+        # Creacion de herramientas
+        self.widget_74FSAG = Tool74FSAG("COM6")
+        self.widget_XGS600 = ToolXGS600("COM10")
+        self.widget_plot = pyqtgraph.PlotWidget()
+
+        # Creacion de timer para bucle
+        self.timer_read = QtCore.QTimer()
+        self.timer_read.timeout.connect(self.read_rutine)
         
         # Creacion de elementos
         self.widget_main = QtWidgets.QWidget()
         self.layout_main = QtWidgets.QVBoxLayout()
         self.splitter = QtWidgets.QSplitter()
         self.tab_panel = QtWidgets.QTabWidget()
-
-        # Creacion de herramientas
-        self.widget_74FSAG = Tool74FSAG("COM5")
-        self.widget_XGS600 = ToolXGS600("COM4")
-        self.widget_plot = pyqtgraph.PlotWidget()
 
         # Agrega elementos al menubar
         self.menu_bar = self.menuBar()
@@ -62,11 +66,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Conexion a señales de herramientas
         self.widget_XGS600.signal_preasure.connect(self.xgs600_signal)
+
+        # Inicia timer de rutina de lectura de presion
+        self.timer_read.start(1000)
     
+    # [Funcion del timer bucle]
+    def read_rutine(self):
+        self.widget_XGS600.serial.write(("#000F\r").encode())
+        self.widget_74FSAG.serial.write(("\x02\x802050\x0384").encode())
+        
     # [Funcion handle de señal XGS600]
     def xgs600_signal(self):
         self.dataframe.loc[self.widget_XGS600.timestamp] = self.widget_XGS600.values_preasure
-        #print(self.dataframe)
         self.plot_aux3.setData(self.dataframe.index.values, self.dataframe["XGS600_T3"].values)
         self.plot_aux4.setData(self.dataframe.index.values, self.dataframe["XGS600_T4"].values)
 

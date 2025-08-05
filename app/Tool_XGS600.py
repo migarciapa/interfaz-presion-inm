@@ -14,11 +14,11 @@ class ToolXGS600(QtWidgets.QWidget):
     signal_preasure = QtCore.pyqtSignal()
     
     # [Constructor]
-    def __init__(self, port_name: str = "COM4"):
+    def __init__(self, port_name: str = "COM10"):
         super().__init__()
         self.setWindowTitle("Herramienta XGS600")
 
-        # Creacion array de datos presion y alerta
+        # Creacion array de datos presion y tiempo
         self.values_preasure = []
         self.timestamp = None
 
@@ -40,7 +40,7 @@ class ToolXGS600(QtWidgets.QWidget):
         self.timer_bucle = QtCore.QTimer()
         self.timer_bucle.timeout.connect(self.bucle_rutine)
 
-        # Creacion y configuracion inicial de elementos
+        # Creacion y configuracion de elementos
         self.slider_time = QtWidgets.QSlider(QtCore.Qt.Orientation.Horizontal)
         self.slider_time.setTickPosition(QtWidgets.QSlider.TickPosition.TicksBelow)
         self.slider_time.setMinimum(1)
@@ -79,14 +79,11 @@ class ToolXGS600(QtWidgets.QWidget):
         self.layout_main.addRow(self.text_console)
 
         # Conexion de las funciones a elementos
+        self.serial.readyRead.connect(self.recive_serial_data)
         self.slider_time.valueChanged.connect(lambda x: self.show_tooltip(x,"s"))
         self.slider_time.valueChanged.connect(lambda x: self.timer_bucle.setInterval(x * 1000))
-        self.serial.readyRead.connect(self.recive_serial_data)
         self.button_command.clicked.connect(self.send_command)
 
-        # Inicia el timer de bucle de lectura presion
-        self.timer_bucle.start(self.slider_time.value() * 1000)
-        
     # [Funcion del timer bucle]
     def bucle_rutine(self):
         self.serial.write(("#000F\r").encode())
@@ -147,4 +144,11 @@ if __name__ == "__main__":
     # Muestra la ventana de herramienta
     window = ToolXGS600()
     window.show()
+
+    # Timer para bucle
+    timer_bucle = QtCore.QTimer()
+    timer_bucle.timeout.connect(window.bucle_rutine)
+    timer_bucle.start(1000)
+    
+    # Salida
     sys.exit(app.exec())
