@@ -8,7 +8,7 @@ class DataWindow:
     # [Constructor]
     def __init__(self, name: str, decoder: callable):
         self.name = name
-        self.value = bytes()
+        self.value = ""
         self.decoder = decoder
 
     # [Call de informacion de la clase]
@@ -24,11 +24,15 @@ class DataWindow:
             return None
     
     # [Set de valor en bruto]
-    def set(self, raw: bytes):
+    def set(self, raw: str):
         self.value = raw
 
     # - FUNCIONES DE DECODIFICACION EN LA CLASE -
     
-    # [Decodificador de ASCII a boleano]
-    def decode_bool(raw: bytes) -> bool:
-        return raw.strip() == b"1"
+    # [Decodificador a boleano]
+    def to_bool(raw: str) -> bool:
+        return bool(int(raw))
+    
+    # [Decodificador a integer]
+    def to_float(raw: str) -> int:
+        return float(raw)

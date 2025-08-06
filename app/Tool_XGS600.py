@@ -92,13 +92,13 @@ class ToolXGS600(QtWidgets.QWidget):
     def recive_serial_data(self):
         self.buffer += bytes(self.serial.readAll())
         if b'\r' in self.buffer:
+            self.timestamp = np.datetime64("now")
             try:
                 line = self.buffer.decode(errors = "ignore").strip()
             except Exception as e:
                 QtWidgets.QMessageBox.critical(self, "Error en la decodificacion", e)
                 self.buffer = bytes()
                 return
-            self.timestamp = np.datetime64("now")
             self.text_console.appendPlainText(line)
             self.buffer = bytes()
 

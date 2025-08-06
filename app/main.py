@@ -22,7 +22,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resize(1280, 720)
 
         # Creacion de dataframe de presion
-        self.dataframe = pd.DataFrame(columns = ["XGS600_T1", "XGS600_T2", "XGS600_T3", "XGS600_T4"])
+        self.dataframe = pd.DataFrame(
+            columns = ["XGS600_T1", "XGS600_T2", "XGS600_T3", "XGS600_T4", "74FS"])
         self.dataframe.index = pd.to_datetime(self.dataframe.index)
 
         # Creacion de herramientas
@@ -60,26 +61,29 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget_plot.showGrid(x=True, y=True, alpha=0.3)
         self.plot_aux3 = self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("r", width=1))
         self.plot_aux4 = self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("g", width=1))
+        self.plot_ref1 = self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("y", width=1))
 
         # Conexion de funciones a elementos
         self.menu_save.triggered.connect(self.save_plot)
 
         # Conexion a señales de herramientas
-        self.widget_XGS600.signal_preasure.connect(self.xgs600_signal)
+        self.widget_XGS600.signal_preasure.connect(self.han_preasure)
 
         # Inicia timer de rutina de lectura de presion
         self.timer_read.start(1000)
     
     # [Funcion del timer bucle]
     def read_rutine(self):
-        self.widget_XGS600.serial.write(("#000F\r").encode())
-        self.widget_74FSAG.serial.write(("\x02\x802050\x0384").encode())
+        self.widget_XGS600.serial.write(b"#000F\r")
+        self.widget_74FSAG.serial.write(b"\x02\x802240\x0387")
         
-    # [Funcion handle de señal XGS600]
-    def xgs600_signal(self):
-        self.dataframe.loc[self.widget_XGS600.timestamp] = self.widget_XGS600.values_preasure
+    # [Funcion handle de señal presion XGS600]
+    def han_preasure(self):
+        self.dataframe.loc[self.widget_XGS600.timestamp] = (
+            self.widget_XGS600.values_preasure + [self.widget_74FSAG.dict_windows[224].decoded()])
         self.plot_aux3.setData(self.dataframe.index.values, self.dataframe["XGS600_T3"].values)
         self.plot_aux4.setData(self.dataframe.index.values, self.dataframe["XGS600_T4"].values)
+        self.plot_ref1.setData(self.dataframe.index.values, self.dataframe["74FS"].values)     
 
     # [Funcion guardar plot]
     def save_plot(self):

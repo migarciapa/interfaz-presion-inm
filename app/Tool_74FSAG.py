@@ -4,6 +4,7 @@
 
 # [Librerias de Terceros]
 import sys
+import numpy as np
 from PyQt6 import QtWidgets, QtSerialPort, QtCore 
 
 # [Clases a importar]
@@ -11,14 +12,14 @@ from Class_DataWindow import DataWindow
 
 # --- HERRAMIENTA 74FSAG ---
 class Tool74FSAG(QtWidgets.QWidget):
-
-    # Señales de salida
-    signal_preasure = QtCore.pyqtSignal()
     
     # [Constructor]
     def __init__(self, port_name: str = "COM6"):
         super().__init__()
         self.setWindowTitle("Herramienta 74FSAG")
+
+        # Creacion de timestamp
+        self.timestamp = None
 
         # Creacion del puerto serial y buffer de comunicacion
         self.buffer = bytes()
@@ -36,8 +37,9 @@ class Tool74FSAG(QtWidgets.QWidget):
 
         # Creacion del diccionario de ventanas para el mapeo de datos
         self.dict_windows = {
-            000: DataWindow("Maquina encendida", DataWindow.decode_bool),
-            100: DataWindow("Arranque suave", DataWindow.decode_bool),
+            000: DataWindow("Maquina encendida", DataWindow.to_bool),
+            100: DataWindow("Arranque suave", DataWindow.to_bool),
+            224: DataWindow("Lectura presion", DataWindow.to_float)
         }
 
         # Creacion y configuracion de elementos
@@ -69,24 +71,27 @@ class Tool74FSAG(QtWidgets.QWidget):
 
     # [Recepcion de mensajes del serial]
     def recive_serial_data(self):
-        while self.serial.bytesAvailable():
-            self.buffer += bytes(self.serial.readAll())
-        if (len(self.buffer) >= 3) and (b'\x03' in self.buffer[:-2]):
-            try:
-                line = self.buffer.decode(errors = "ignore")
-                line = line[line.find('\x02')+1:line.find('\x03')].strip()
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error en la decodificacion", e)
-                self.buffer = bytes()
-                return
-            self.text_console.appendPlainText(line)
-            self.buffer = bytes()
+        self.buffer += bytes(self.serial.readAll())
+        idx = self.buffer.find(b'\x03')
 
-            # Conversion a ventana y dato
-            try:
-                if len(line) < 5: raise Exception(repr(line.encode()))
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self,"", "[74FSAG] Respuesta error\n" + str(e))
+        # Procesado de mensaje
+        if idx != -1 and len(self.buffer) >= idx + 3:
+            self.timestamp = np.datetime64("now")
+            idx += 3
+            line = self.buffer[:idx].decode(errors = "ignore")
+            self.buffer = self.buffer[idx:]
+            line = line[line.find('\x02') + 1 :line.find('\x03')].strip()
+            self.text_console.appendPlainText(line)
+
+            # Asignacion a ventana
+            if len(line) >= 5:
+                win = int(line[:3])
+                data = line[4:]
+                self.dict_windows[win].set(data)
+                print(self.dict_windows[win])
+
+
+
 
 # --- INICIALIZADOR ---
 if __name__ == "__main__":

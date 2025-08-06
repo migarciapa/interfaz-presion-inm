@@ -7,7 +7,7 @@ from PyQt6 import QtCore, QtWidgets, QtSerialPort, QtGui
 import sys
 
 # --- CONFIGURACION ---
-PORT_NAME = 'COM4'
+PORT_NAME = 'COM6'
 BAUDRATE = 9600
 ADDR = b'\x80'
 
