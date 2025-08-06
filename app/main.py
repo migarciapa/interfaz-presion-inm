@@ -9,7 +9,7 @@ import pandas as pd
 from PyQt6 import QtCore, QtWidgets
 
 # [Clases de herramientas]
-from Tool_74FSAG import Tool74FSAG
+from app.module_74fsag import Tool74FSAG
 from Tool_XGS600 import ToolXGS600
 
 # --- APLICACION PRINCIPAL ---
