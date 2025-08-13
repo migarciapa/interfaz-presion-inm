@@ -19,16 +19,12 @@ class Coms74FSAG(QtWidgets.QWidget):
         # Creacion del puerto serial y buffer de comunicacion
         self.buffer = bytes()
         self.serial = QtSerialPort.QSerialPort()
-        self.serial.setPortName(port_name)
         self.serial.setBaudRate(9600)
         self.serial.setDataBits(QtSerialPort.QSerialPort.DataBits.Data8)
         self.serial.setParity(QtSerialPort.QSerialPort.Parity.NoParity)
         self.serial.setStopBits(QtSerialPort.QSerialPort.StopBits.OneStop)
         self.serial.setFlowControl(QtSerialPort.QSerialPort.FlowControl.NoFlowControl)
-        if self.serial.open(QtCore.QIODevice.OpenModeFlag.ReadWrite):
-            print("[74FSAG] Puerto serial abierto correctamente!")
-        else:
-            print("[74FSAG] No se pudo abrir el puerto serial. Error:", self.serial.errorString())
+        self.select_port(port_name)
 
         # Conexion a recepcion de datos
         self.serial.readyRead.connect(self.recive_serial)
@@ -51,7 +47,7 @@ class Coms74FSAG(QtWidgets.QWidget):
         # Ubicacion de elementos en layout
         self.layout_main = QtWidgets.QFormLayout()
         self.setLayout(self.layout_main)
-        self.layout_main.addRow("Ventana:", self.input_window)
+        self.layout_main.addRow("Ventana (###) [Int]:", self.input_window)
         self.layout_main.addRow("Dato:", self.input_data)
         layout_buttons = QtWidgets.QHBoxLayout()
         self.layout_main.addRow(layout_buttons)
@@ -62,6 +58,17 @@ class Coms74FSAG(QtWidgets.QWidget):
         # Conexion de funciones handle
         self.button_read.clicked.connect(self.handle_click_read)
         self.button_write.clicked.connect(self.handle_click_write)
+
+    # [Metodo para seleccionar o cambiar puerto serial]
+    def select_port(self, port_name: str):
+        if self.serial.isOpen():
+            self.serial.close()
+            print("[74FSAG] Puerto serial cerrado.")
+        self.serial.setPortName(port_name)
+        if self.serial.open(QtCore.QIODevice.OpenModeFlag.ReadWrite):
+            print(f"[74FSAG] Puerto {port_name} abierto correctamente!")
+        else:
+            print(f"[74FSAG] No se pudo abrir el puerto {port_name}. Error:", self.serial.errorString())
     
     # [Funcion de rutina de lectura]
     def bucle_rutine(self):
@@ -102,6 +109,7 @@ class Coms74FSAG(QtWidgets.QWidget):
         crc = f"{crc:02X}".encode()
         line = b"\x02" + msg + crc
         self.serial.write(line)
+        self.text_console.appendPlainText(repr(line))
     
     # [Handle de click boton de lectura]
     def handle_click_read(self):
