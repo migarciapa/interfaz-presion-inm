@@ -6,6 +6,7 @@
 import sys, datetime
 import pyqtgraph
 import pandas as pd
+import numpy as np
 from PyQt6 import QtCore, QtWidgets, QtGui
 
 # [Modulos importados]
@@ -31,11 +32,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget_display = WidgetDisplay()
 
         # Configuracion del widget de grafico
-        self.widget_plot = pyqtgraph.PlotWidget()
-        self.widget_plot.setLogMode(x=False, y=True)
-        self.widget_plot.showGrid(x=True, y=True, alpha=0.3)
         time_axis = TimeAxis(orientation='bottom')
         self.widget_plot = pyqtgraph.PlotWidget(axisItems={'bottom': time_axis})
+        self.widget_plot.setLogMode(x=False, y=True)
+        self.widget_plot.showGrid(x=True, y=True, alpha=0.3)
         self.line_plot = []
         self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("white", width=1)))
         self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("red", width=1)))
@@ -197,7 +197,7 @@ class TimeAxis(pyqtgraph.AxisItem):
     
     # [Obtencion de ejes de tiempo]
     def tickStrings(self, values, scale, spacing):
-        return [datetime.datetime.fromtimestamp(v).strftime("%H:%M:%S") for v in values]
+        return [datetime.datetime.fromtimestamp(v / 1e9).strftime("%H:%M:%S") for v in values]
 
 
 

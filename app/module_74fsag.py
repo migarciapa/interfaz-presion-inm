@@ -3,7 +3,7 @@
 # Universidad Nacional de Colombia Sede Bogota
 
 # [Librerias de Terceros]
-import sys
+import sys, time
 import numpy as np
 from PyQt6 import QtWidgets, QtSerialPort, QtCore 
 
@@ -33,6 +33,8 @@ class Coms74FSAG(QtWidgets.QWidget):
         self.dict_windows = {
             000: DataWindow("Maquina encendida", DataWindow.to_bool),
             100: DataWindow("Arranque suave", DataWindow.to_bool),
+            120: DataWindow("Frecuencia de la bomba", DataWindow.to_int),
+            157: DataWindow("Gas cargado", DataWindow.to_int),
             224: DataWindow("Lectura presion", DataWindow.to_float)
         }
 
@@ -72,31 +74,34 @@ class Coms74FSAG(QtWidgets.QWidget):
     
     # [Funcion de rutina de lectura]
     def bucle_rutine(self):
-        self.send_serial(224, False)
+        self.read_changes()
 
     # [Recepcion de mensajes del serial]
     def recive_serial(self):
         self.buffer += bytes(self.serial.readAll())
+        #print(self.buffer)
         idx = self.buffer.find(b'\x03')
 
         # Procesado de mensaje
         if idx != -1 and len(self.buffer) >= idx + 3:
+            print(self.buffer)
             self.timestamp = np.datetime64("now")
-            idx += 3
-            line = self.buffer[:idx].decode(errors = "ignore")
-            self.buffer = self.buffer[idx:]
-            line = line[line.find('\x02') + 1 :line.find('\x03')].strip()
-            self.text_console.appendPlainText(line)
+            block = self.buffer[:idx].decode(errors = "ignore")
+            self.buffer = self.buffer[idx+3:]
+            block = block[block.find('\x02'):]
+            lines = block.split('\x02')
+            for line in lines:
+                self.text_console.appendPlainText(line)
 
-            # Asignacion a ventana
-            if len(line) >= 5:
-                window = int(line[:3])
-                data = line[4:]
-                try:
-                    self.dict_windows[window].set(data)
-                    print(self.dict_windows[window])
-                except Exception as e:
-                    print(f"Ventana desconocida {window} reporta {data}")
+                # Asignacion a ventana
+                if len(line) >= 5:
+                    window = int(line[:3])
+                    data = line[4:]
+                    try:
+                        self.dict_windows[window].set(data)
+                        print(self.dict_windows[window])
+                    except Exception as e:
+                        print(f"Ventana desconocida {window} reporta {data}")
     
     # [Envio de mensajes del serial]
     def send_serial(self, window: int, write: bool, data: str = ""):
@@ -110,6 +115,11 @@ class Coms74FSAG(QtWidgets.QWidget):
         line = b"\x02" + msg + crc
         self.serial.write(line)
         self.text_console.appendPlainText(repr(line))
+
+    # [Solicitud lectura de cambios rapidos]
+    def read_changes(self):
+        windows = [200, 201, 202, 203, 204, 205, 224, 257, 300, 301, 302]
+        for window in windows: self.send_serial(window, False)
     
     # [Handle de click boton de lectura]
     def handle_click_read(self):
@@ -138,12 +148,45 @@ class Widget74FSAG(QtWidgets.QWidget):
         # Elementos graficos del widget
         self.button_pump = QtWidgets.QPushButton("Encender Bomba Turbo")
         self.button_pump.setCheckable(True)
+        self.checkbox_soft_start = QtWidgets.QCheckBox("Arranque suave")
+        self.spinbox_frequency = QtWidgets.QSpinBox()
+        self.spinbox_frequency.setRange(1100, 1167)
+        self.spinbox_frequency.setSingleStep(1)
+        self.combobox_loaded_gas = QtWidgets.QComboBox()
+        self.combobox_loaded_gas.addItem("N₂", 0)
+        self.combobox_loaded_gas.addItem("Ar₂", 1)
+        self.combobox_units = QtWidgets.QComboBox()
+        self.combobox_units.addItem("mBar", 0)
+        self.combobox_units.addItem("Pa", 1)
+        self.combobox_units.addItem("Torr", 2)
+        self.label_current = QtWidgets.QLabel()
+        self.label_voltage = QtWidgets.QLabel()
+        self.label_power = QtWidgets.QLabel()
+        self.label_frequency = QtWidgets.QLabel()
+        self.label_temperature = QtWidgets.QLabel()
+        self.label_pump_status = QtWidgets.QLabel("No Conection")
+        self.label_gauge_status = QtWidgets.QLabel("No Conection")
+        self.label_pump_on_time = QtWidgets.QLabel()
+        self.label_pump_cicle = QtWidgets.QLabel()
+        self.label_pump_active_time = QtWidgets.QLabel()
         self.checkbox_console = QtWidgets.QCheckBox("Ver Terminal")
         
         # Ubicacion de elementos en layout
         self.layout_main = QtWidgets.QFormLayout()
         self.setLayout(self.layout_main)
         self.layout_main.addRow(self.button_pump)
+        self.layout_main.addRow(self.checkbox_soft_start)
+        self.layout_main.addRow("Ajustar setpoint frecuencia [Hz]", self.spinbox_frequency)
+        self.layout_main.addRow("Gas cargado", self.combobox_loaded_gas)
+        self.layout_main.addRow("Unidades del controlador", self.combobox_units)
+        self.layout_main.addRow("Corriente de la bomba [mA]", self.label_current)
+        self.layout_main.addRow("Voltaje de la bomba [V]", self.label_voltage)
+        self.layout_main.addRow("Potencia DC de la bomba [W]", self.label_power)
+        self.layout_main.addRow("Estado de la bomba: ", self.label_pump_status)
+        self.layout_main.addRow("Estado del indicador: ", self.label_gauge_status)
+        self.layout_main.addRow("Tiempo desde encendido [min] ", self.label_pump_on_time)
+        self.layout_main.addRow("Cantidad de ciclos de la bomba",  self.label_pump_cicle)
+        self.layout_main.addRow("Tiempo activo total [h]",  self.label_pump_cicle)
         separator = QtWidgets.QFrame()
         separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
         separator.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
@@ -191,9 +234,13 @@ class DataWindow:
     def to_bool(raw: str) -> bool:
         return bool(int(raw))
     
-    # [Decodificador a integer]
-    def to_float(raw: str) -> int:
+    # [Decodificador a float]
+    def to_float(raw: str) -> float:
         return float(raw)
+    
+    # [Decodificador a integer]
+    def to_int(raw: str) -> int:
+        return int(raw)
 
 # --------------------------------------------------------------
 
