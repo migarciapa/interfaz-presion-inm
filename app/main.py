@@ -138,7 +138,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # [Funcion handle de seleccionar puertos]
     def handle_select_ports(self):
-        print("boop!")
         dialog_selector = module_tools.PortSelector()
         if dialog_selector.exec() == QtWidgets.QDialog.DialogCode.Accepted:
             puertos = dialog_selector.get_selected_ports()

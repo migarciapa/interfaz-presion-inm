@@ -3,7 +3,8 @@ X Probar el sistema de guardado en excel, csv y xml
 X Probar el sistema de seleccion de puertos
 X Probar cambios de selector puertos en modulos de los controladores
 X Probar el formato de tiempo en los ejes
-- REFACTOR DE EL SSITEMA DE RECEPCION DE MENSAJES DEL XGS600
+X Envio de mensajes uno por uno
+- REFACTOR DE EL SITEMA DE RECEPCION DE MENSAJES DEL XGS600
 - REFOACTOR DE SEPARACION FRONTEND Y BACKEND DEL XGS600
 - CONTROLES DE USUARIO PARA EL 74FSAG
 - Controles generales del grafico en tiempo
