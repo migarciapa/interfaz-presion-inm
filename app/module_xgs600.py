@@ -16,7 +16,7 @@ class ComsXGS600(QtWidgets.QWidget):
     signal_preasure = QtCore.pyqtSignal()
     
     # [Constructor]
-    def __init__(self, port_name: str = "COM10"):
+    def __init__(self, port_name: str = "COM6"):
         super().__init__()
         self.setWindowTitle("Consola Controlador XGS600")
 
@@ -66,24 +66,18 @@ class ComsXGS600(QtWidgets.QWidget):
         else:
             print(f"[XGS600] No se pudo abrir el puerto {port_name}. Error:", self.serial.errorString())
 
-    # [Funcion de rutina de lectura]
-    def bucle_rutine(self):
-        self.send_serial("0F")
-
     # [Recepcion de mensajes del serial]
     def recive_serial(self):
         self.buffer += bytes(self.serial.readAll())
         idx = self.buffer.find(b'\r')
-        if b'\r' in self.buffer:
-            self.timestamp = np.datetime64(datetime.datetime.now())
-            try:
-                line = self.buffer.decode(errors = "ignore").strip()
-            except Exception as e:
-                QtWidgets.QMessageBox.critical(self, "Error en la decodificacion", e)
-                self.buffer = bytes()
-                return
+
+        # Procesado de mensaje
+        if idx != -1:
+            self.timestamp = datetime.datetime.now()
+            line = self.buffer[:idx].decode(errors = "ignore")
+            self.buffer = self.buffer[idx:]
+            line = line.strip()
             self.text_console.appendPlainText(line)
-            self.buffer = bytes()
 
             # Conversion a datos presion
             if "," in line:
@@ -96,7 +90,7 @@ class ComsXGS600(QtWidgets.QWidget):
                     except ValueError:
                         values.append(np.nan)
                 
-                # Envia alerta y cambia labels
+                # Guarda valores y emite señal
                 self.values_preasure = values
                 self.signal_preasure.emit()
     
@@ -114,6 +108,35 @@ class ComsXGS600(QtWidgets.QWidget):
         data = self.input_data.text()
         self.send_serial(comand, data)
 
+# --- WIDGET XGS600 ---
+# Clase para la interfaz de usuario con el controlador XGS600
+class WidgetXGS600(QtWidgets.QWidget):
+
+    # [Constructor]
+    def __init__(self, backend: ComsXGS600):
+        super().__init__()
+        self.setWindowTitle("Widget 74FSAG")
+
+        # Obtencion del backend de comunicacion
+        self.coms = backend
+        self.coms.setVisible(False)
+
+        # Elementos graficos del widget
+        self.checkbox_console = QtWidgets.QCheckBox("Ver Terminal")
+        
+        # Ubicacion de elementos en layout
+        self.layout_main = QtWidgets.QFormLayout()
+        self.setLayout(self.layout_main)
+        separator = QtWidgets.QFrame()
+        separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+        separator.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self.layout_main.addRow(separator)
+        self.layout_main.addRow(self.checkbox_console)
+        self.layout_main.addRow(self.coms)
+
+        # Conexion de funciones handle
+        self.checkbox_console.toggled.connect(self.coms.setVisible)
+
 # --------------------------------------------------------------
 
 # --- INICIALIZADOR ---
@@ -127,9 +150,12 @@ if __name__ == "__main__":
     window = ComsXGS600()
     window.show()
 
+    def rutine():
+        window.send_serial("0F")
+
     # Timer para bucle
     timer_bucle = QtCore.QTimer()
-    timer_bucle.timeout.connect(window.bucle_rutine)
+    timer_bucle.timeout.connect(rutine)
     timer_bucle.start(2000)
     
     # Salida

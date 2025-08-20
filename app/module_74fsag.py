@@ -3,9 +3,8 @@
 # Universidad Nacional de Colombia Sede Bogota
 
 # [Librerias de Terceros]
-import sys, time
-import numpy as np
-from PyQt6 import QtWidgets, QtSerialPort, QtCore, QtGui 
+import sys
+from PyQt6 import QtWidgets, QtSerialPort, QtCore
 
 # --- COMUNICACION 74FSAG ---
 # Clase backend para comunicaciones y consola del controlador
@@ -79,9 +78,6 @@ class Coms74FSAG(QtWidgets.QWidget):
         self.button_read.clicked.connect(self.handle_click_read)
         self.button_write.clicked.connect(self.handle_click_write)
 
-        # Primera lectura de datos
-        self.read_all()
-
     # [Metodo para seleccionar o cambiar puerto serial]
     def select_port(self, port_name: str):
         if self.serial.isOpen():
@@ -100,7 +96,6 @@ class Coms74FSAG(QtWidgets.QWidget):
 
         # Procesado de mensaje
         if idx != -1 and len(self.buffer) >= idx + 3:
-            self.timestamp = np.datetime64("now")
             idx += 3
             line = self.buffer[:idx].decode(errors = "ignore")
             self.buffer = self.buffer[idx:]
@@ -258,7 +253,7 @@ class Widget74FSAG(QtWidgets.QWidget):
         self.timer_update.timeout.connect(self.update_values)
         self.timer_update.start()
     
-    # [Handle de click boton de lectura]
+    # [Handle de refresco de valores]
     def update_values(self):
         self.button_pump.setChecked(self.coms.dict_windows[000].decoded())
         self.checkbox_soft_start.setChecked(self.coms.dict_windows[100].decoded())
@@ -358,12 +353,12 @@ if __name__ == "__main__":
     window = Widget74FSAG(coms)
     window.show()
 
-    # Timer para bucle
-    def rutine():
-        coms.read_changes()
+    # lectura de todos los registros
+    coms.read_all()
 
+    # Timer de lectura de cambios
     timer_bucle = QtCore.QTimer()
-    timer_bucle.timeout.connect(rutine)
+    timer_bucle.timeout.connect(coms.read_changes)
     timer_bucle.start(2000)
     
     # Salida
