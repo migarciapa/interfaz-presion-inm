@@ -110,6 +110,38 @@ class TimeAxis(pyqtgraph.AxisItem):
     # [Obtencion de ejes de tiempo]
     def tickStrings(self, values, scale, spacing):
         return [datetime.datetime.fromtimestamp(v).strftime("%H:%M:%S") for v in values]
+    
+# --- CONTROLES DE GRAFICO ---
+# Widget para la visualizacion de controles del grafico
+class WidgetGraphControls(QtWidgets.QWidget):
+
+    # Señales de salida
+    signal_reset = QtCore.pyqtSignal()
+    signal_timeset = QtCore.pyqtSignal()
+        
+    # [Constructor]
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Widget Controles")
+
+        # Labels para el display
+        self.button_reset = QtWidgets.QPushButton("Limpiar Datos")
+        self.spinbox_time = QtWidgets.QSpinBox()
+        self.spinbox_time.setRange(1, 60)
+        self.spinbox_time.setSingleStep(1)
+
+        # Ubicacion de elementos en el layout
+        self.layout_main = QtWidgets.QHBoxLayout()
+        self.setLayout(self.layout_main)
+        self.layout_main.addWidget(self.button_reset)
+        label = QtWidgets.QLabel("Tiempo intervalo entre medidas [s]")
+        self.layout_main.addWidget(label)
+        self.layout_main.addWidget(self.spinbox_time)
+        self.layout_main.addStretch()
+
+        # Conexion de funciones señal
+        self.button_reset.clicked.connect(self.signal_reset.emit)
+        self.spinbox_time.editingFinished.connect(self.signal_timeset.emit)
 
 # --------------------------------------------------------------
 
@@ -121,7 +153,7 @@ if __name__ == "__main__":
     QtWidgets.QApplication.setStyle("Fusion")
     
     # Muestra la ventana de herramienta
-    window = PortSelector()
+    window = WidgetGraphControls()
     window.show()
     
     # Salida

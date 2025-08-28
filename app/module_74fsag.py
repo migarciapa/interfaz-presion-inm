@@ -11,29 +11,12 @@ from PyQt6 import QtWidgets, QtSerialPort, QtCore
 class Coms74FSAG(QtWidgets.QWidget):
     
     # [Constructor]
-    def __init__(self, port_name: str = "COM6"):
+    def __init__(self, port_name: str = "COM11"):
         super().__init__()
         self.setWindowTitle("Consola Controlador 74FSAG")
 
-        # Creacion del puerto serial y buffer de comunicacion
-        self.buffer = bytes()
-        self.serial = QtSerialPort.QSerialPort()
-        self.serial.setBaudRate(9600)
-        self.serial.setDataBits(QtSerialPort.QSerialPort.DataBits.Data8)
-        self.serial.setParity(QtSerialPort.QSerialPort.Parity.NoParity)
-        self.serial.setStopBits(QtSerialPort.QSerialPort.StopBits.OneStop)
-        self.serial.setFlowControl(QtSerialPort.QSerialPort.FlowControl.NoFlowControl)
-        self.select_port(port_name)
-
-        # Conexion a recepcion de datos
-        self.serial.readyRead.connect(self.recive_serial)
-
-        # Elementos de control de cola de mensajes
-        self.queue = []
-        self.waiting_response = False
-        self.timer_response = QtCore.QTimer()
-        self.timer_response.setInterval(1000)
-        self.timer_response.timeout.connect(self.handle_timeout_response)
+        # Creacion de boleano para la obtencion del estado de respuestas
+        self.active = False
 
         # Creacion del diccionario de ventanas para el mapeo de datos
         self.dict_windows = {
@@ -55,6 +38,13 @@ class Coms74FSAG(QtWidgets.QWidget):
             302: DataWindow("Tiempo activo total", DataWindow.to_int)
         }
 
+        # Elementos de control de cola de mensajes
+        self.queue = []
+        self.waiting_response = False
+        self.timer_response = QtCore.QTimer()
+        self.timer_response.setInterval(1000)
+        self.timer_response.timeout.connect(self.handle_timeout_response)
+
         # Elementos graficos para consola
         self.input_window = QtWidgets.QLineEdit()
         self.input_data = QtWidgets.QLineEdit()
@@ -62,6 +52,19 @@ class Coms74FSAG(QtWidgets.QWidget):
         self.button_write = QtWidgets.QPushButton("Escribir")
         self.text_console = QtWidgets.QPlainTextEdit()
         self.text_console.setReadOnly(True)
+
+        # Creacion del puerto serial y buffer de comunicacion
+        self.buffer = bytes()
+        self.serial = QtSerialPort.QSerialPort()
+        self.serial.setBaudRate(9600)
+        self.serial.setDataBits(QtSerialPort.QSerialPort.DataBits.Data8)
+        self.serial.setParity(QtSerialPort.QSerialPort.Parity.NoParity)
+        self.serial.setStopBits(QtSerialPort.QSerialPort.StopBits.OneStop)
+        self.serial.setFlowControl(QtSerialPort.QSerialPort.FlowControl.NoFlowControl)
+        self.select_port(port_name)
+
+        # Conexion a recepcion de datos
+        self.serial.readyRead.connect(self.recive_serial)
         
         # Ubicacion de elementos en layout
         self.layout_main = QtWidgets.QFormLayout()
@@ -86,8 +89,12 @@ class Coms74FSAG(QtWidgets.QWidget):
         self.serial.setPortName(port_name)
         if self.serial.open(QtCore.QIODevice.OpenModeFlag.ReadWrite):
             print(f"[74FSAG] Puerto {port_name} abierto correctamente!")
+            self.read_all()
         else:
-            print(f"[74FSAG] No se pudo abrir el puerto {port_name}. Error:", self.serial.errorString())
+            QtWidgets.QMessageBox.warning(self, "",
+                f"[74FSAG] No se pudo abrir el puerto {port_name}.\n"
+                f"Error: {self.serial.errorString()}")
+            self.active = False
 
     # [Recepcion de mensajes del serial]
     def recive_serial(self):
@@ -113,9 +120,21 @@ class Coms74FSAG(QtWidgets.QWidget):
                 data = line[4:]
                 try:
                     self.dict_windows[window].set(data)
-                    print(self.dict_windows[window])
+                    self.active = True
                 except Exception as e:
                     print(f"Ventana desconocida {window} reporta {data}")
+
+            # Caso de respuesta error
+            else:
+                if line == "2": QtWidgets.QMessageBox.warning(self, "",
+                    "[74FSAG] 0x32 = La ventana ingresada no es valida")
+                if line == "3": QtWidgets.QMessageBox.warning(self, "",
+                    "[74FSAG] 0x33 = El formato del dato ingresado no es adecudado")
+                if line == "4": QtWidgets.QMessageBox.warning(self, "",
+                    "[74FSAG] 0x34 = El dato ingresado esta fuera de rango")
+                if line == "5": QtWidgets.QMessageBox.warning(self, "",
+                    "[74FSAG] 0x35 = La ventana ingresada esta bloqueada\n"
+                    "Por favor verifique que el controlador este en modo serial")
     
     # [Envio de mensajes del serial]
     def send_serial(self, window: int, write: bool, data: str = ""):
@@ -137,16 +156,18 @@ class Coms74FSAG(QtWidgets.QWidget):
             self.waiting_response = False
             return
         line = self.queue.pop(0)
-        self.serial.write(line)
+        try: self.serial.write(line)
+        except Exception as e: self.active = False
         self.text_console.appendPlainText(repr(line))
         self.waiting_response = True
         self.timer_response.start()
 
-    # [Handle de timout de la respuesta]
+    # [Handle de timeout de la respuesta]
     def handle_timeout_response(self):
         self.text_console.appendPlainText("Timeout sin respuesta - Limpiando Cola")
         self.waiting_response = False
         self.queue = []
+        self.active = False
 
     # [Solicitud lectura de cambios rapidos]
     def read_changes(self):
@@ -183,6 +204,7 @@ class Widget74FSAG(QtWidgets.QWidget):
         self.coms.setVisible(False)
 
         # Elementos graficos del widget
+        self.label_status = QtWidgets.QLabel("●")
         self.button_pump = QtWidgets.QPushButton("Encender Bomba Turbo")
         self.button_pump.setCheckable(True)
         self.checkbox_soft_start = QtWidgets.QCheckBox("Arranque suave")
@@ -221,6 +243,11 @@ class Widget74FSAG(QtWidgets.QWidget):
         # Ubicacion de elementos en layout
         self.layout_main = QtWidgets.QFormLayout()
         self.setLayout(self.layout_main)
+        self.layout_main.addRow(self.label_status)
+        separator_1 = QtWidgets.QFrame()
+        separator_1.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+        separator_1.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self.layout_main.addRow(separator_1)
         self.layout_main.addRow(self.button_pump)
         self.layout_main.addRow(self.checkbox_soft_start)
         self.layout_main.addRow("Setetpoint frecuencia [Hz]", self.spinbox_frequency)
@@ -236,16 +263,20 @@ class Widget74FSAG(QtWidgets.QWidget):
         self.layout_main.addRow("Tiempo desde encendido", self.label_pump_on_time)
         self.layout_main.addRow("Ciclo de la bomba",  self.label_pump_cicle)
         self.layout_main.addRow("Tiempo activo total",  self.label_pump_active_time)
-        separator = QtWidgets.QFrame()
-        separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
-        separator.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
-        self.layout_main.addRow(separator)
+        separator_2 = QtWidgets.QFrame()
+        separator_2.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+        separator_2.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self.layout_main.addRow(separator_2)
         self.layout_main.addRow(self.checkbox_console)
         self.layout_main.addRow(self.coms)
 
         # Conexion de funciones handle
         self.checkbox_console.toggled.connect(self.coms.setVisible)
-        self.button_pump.toggled.connect(self.update_button_pump)
+        self.button_pump.clicked.connect(self.handle_button_pump)
+        self.checkbox_soft_start.clicked.connect(self.handle_checkbox_soft_start)
+        self.spinbox_frequency.editingFinished.connect(self.handle_spinbox_frequency)
+        self.combobox_loaded_gas.activated.connect(self.handle_combobox_loaded_gas)
+        self.combobox_units.activated.connect(self.handle_combobox_units)
 
         # Timer para refrescar valores
         self.timer_update = QtCore.QTimer()
@@ -255,9 +286,16 @@ class Widget74FSAG(QtWidgets.QWidget):
     
     # [Handle de refresco de valores]
     def update_values(self):
+        if self.coms.active:
+            self.label_status.setText("● Respuesta activa")
+            self.label_status.setStyleSheet("color: green;")
+        else:
+            self.label_status.setText("● Sin respuesta")
+            self.label_status.setStyleSheet("color: red;")
         self.button_pump.setChecked(self.coms.dict_windows[000].decoded())
         self.checkbox_soft_start.setChecked(self.coms.dict_windows[100].decoded())
-        self.spinbox_frequency.setValue(self.coms.dict_windows[120].decoded())
+        if not self.spinbox_frequency.hasFocus():
+            self.spinbox_frequency.setValue(self.coms.dict_windows[120].decoded())
         self.combobox_loaded_gas.setCurrentIndex(self.coms.dict_windows[157].decoded())
         self.combobox_units.setCurrentIndex(self.coms.dict_windows[163].decoded())
         self.label_current.setText(str(self.coms.dict_windows[200].decoded()) + " mA")
@@ -271,9 +309,37 @@ class Widget74FSAG(QtWidgets.QWidget):
         self.label_pump_cicle.setText("#" + str(self.coms.dict_windows[301].decoded()))
         self.label_pump_active_time.setText(str(self.coms.dict_windows[302].decoded()) + " h")
 
-    # [Estilizado del boton de encendido o apagado segun estado]
-    def update_button_pump(self):
-        print("boop!")
+    # [Handle click boton de encendido de la bomba]
+    def handle_button_pump(self, state: bool):
+        if state: self.coms.send_serial(000, True, "1")
+        else: self.coms.send_serial(000, True, "0")
+        self.coms.send_serial(000, False)
+
+    # [Handle click para arranque suave]
+    def handle_checkbox_soft_start(self, state: bool):
+        if state: self.coms.send_serial(100, True, "1")
+        else: self.coms.send_serial(100, True, "0")
+        self.coms.send_serial(100, False)
+
+    # [Handle cambio de setpoint de frecuencia]
+    def handle_spinbox_frequency(self):
+        value = self.spinbox_frequency.value()
+        self.coms.send_serial(120, True, f"{value:06d}")
+        self.coms.send_serial(120, False)
+    
+    # [Handle cambio de gas cargado]
+    def handle_combobox_loaded_gas(self, value: int):
+        self.coms.send_serial(157, True, f"{value:01d}")
+        self.coms.send_serial(157, False)
+
+    # [Handle cambio de unidades de medida]
+    def handle_combobox_units(self, value: int):
+        response = QtWidgets.QMessageBox.question(self, "",
+            "Cambiar las unidades del controlador puede alterar los datos registrados.\n"
+            "¿Esta seguro que desea cambiar las unidades nativas del controlador?")
+        if response == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.coms.send_serial(163, True, f"{value:06d}")
+            self.coms.send_serial(163, False)    
 
 # --- DATA WINDOW CLASS ---
 # Clase para objetos de almacenamiento de datos del controlador
@@ -282,7 +348,7 @@ class DataWindow:
     # [Constructor]
     def __init__(self, name: str, decoder: callable):
         self.name = name
-        self.value = ""
+        self.value = "0"
         self.decoder = decoder
 
     # [Call de informacion de la clase]
@@ -352,6 +418,7 @@ if __name__ == "__main__":
     coms = Coms74FSAG()
     window = Widget74FSAG(coms)
     window.show()
+    window.setFocusPolicy(QtCore.Qt.FocusPolicy.ClickFocus)
 
     # lectura de todos los registros
     coms.read_all()
@@ -359,7 +426,7 @@ if __name__ == "__main__":
     # Timer de lectura de cambios
     timer_bucle = QtCore.QTimer()
     timer_bucle.timeout.connect(coms.read_changes)
-    timer_bucle.start(2000)
+    #timer_bucle.start(2000)
     
     # Salida
     sys.exit(app.exec())
