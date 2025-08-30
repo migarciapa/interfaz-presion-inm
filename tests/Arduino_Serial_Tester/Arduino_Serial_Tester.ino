@@ -19,9 +19,8 @@ void loop() {
     if(comando == "marco"){
       Serial.println("polo");
     }
-  } else {
-    Serial.println("ping");
   }
+  Serial.print("> 1, 3, 10, 30\r");
   delay(1000);
 
 }

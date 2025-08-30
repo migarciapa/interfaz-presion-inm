@@ -1,0 +1,15 @@
+PENDIENTES POR REALIZAR
+X Probar el sistema de guardado en excel, csv y xml
+X Probar el sistema de seleccion de puertos
+X Probar cambios de selector puertos en modulos de los controladores
+X Probar el formato de tiempo en los ejes
+X Envio de mensajes uno por uno
+X REFACTOR DE EL SITEMA DE RECEPCION DE MENSAJES DEL XGS600
+X REFOACTOR DE SEPARACION FRONTEND Y BACKEND DEL XGS600
+X CONTROLES DE USUARIO PARA EL 74FSAG
+X Controles generales del grafico en tiempo
+X Posibilidad de exportar como imagen
+X Alertas y reconeccion de puertos
+X Guardado automatico configurable/por defecto (2min)
+X Opciones esteticas como iconos y fondos
+- Exportar a un ejecutable
