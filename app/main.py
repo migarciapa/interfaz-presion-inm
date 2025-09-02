@@ -37,11 +37,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget_plot.setLogMode(x=False, y=True)
         self.widget_plot.showGrid(x=True, y=True, alpha=0.3)
         self.line_plot = []
-        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("white", width=1)))
-        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("red", width=1)))
-        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("green", width=1)))
-        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("blue", width=1)))
-        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("purple", width=1)))
+        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("#FFFFFF", width=1)))
+        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("#FF0000", width=1)))
+        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("#00FF00", width=1)))
+        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("#0000FF", width=1)))
+        self.line_plot.append(self.widget_plot.plot([], [], pen=pyqtgraph.mkPen("#FF00FF", width=1)))
         
         # Elementos graficos de organizacion
         self.widget_main = QtWidgets.QWidget()

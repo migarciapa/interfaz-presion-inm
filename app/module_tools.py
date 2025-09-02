@@ -75,10 +75,10 @@ class WidgetDisplay(QtWidgets.QWidget):
             self.label_preasure.append(label)
         
         # Ajsutar colores de los label
-        self.label_preasure[1].setStyleSheet("color: red")
-        self.label_preasure[2].setStyleSheet("color: green")
-        self.label_preasure[3].setStyleSheet("color: blue")
-        self.label_preasure[4].setStyleSheet("color: purple")
+        self.label_preasure[1].setStyleSheet("color: #FF0000")
+        self.label_preasure[2].setStyleSheet("color: #00FF00")
+        self.label_preasure[3].setStyleSheet("color: #0000FF")
+        self.label_preasure[4].setStyleSheet("color: #FF00FF")
 
         # Ubicacion de elementos en el layout
         self.layout_main = QtWidgets.QFormLayout()

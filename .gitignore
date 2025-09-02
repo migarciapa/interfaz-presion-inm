@@ -1,3 +1,4 @@
 # Ignorar las carpetas de compilacion y distrubuciones
+app/__pycache__/
 build/
 dist/
