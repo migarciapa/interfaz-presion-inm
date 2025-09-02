@@ -5,7 +5,7 @@ rmdir /s /q build
 rmdir /s /q dist
 
 python -m PyInstaller --noconfirm --onefile --windowed ^
-    --name=INMpress ^
+    --name=INMPress ^
     --icon=app/resources/app_icon.ico ^
     --add-data "app/resources;app/resources" ^
     app/main.py
