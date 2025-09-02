@@ -71,6 +71,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.splitter_main.setStretchFactor(1, 1)
         self.splitter_sidebar.setStretchFactor(0, 0)
         self.splitter_sidebar.setStretchFactor(1, 1)
+        self.splitter_graph.setStretchFactor(0, 1)
+        self.splitter_graph.setStretchFactor(1, 0)
 
         # Agrega elementos al menubar
         self.menu_bar = self.menuBar()
@@ -113,7 +115,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.dataframe.empty:
             self.status_bar.showMessage("Autosave: No hay datos en el grafico")
             return
-        filename = os.path.dirname(sys.argv[0]) + "/pressure_autosave.csv"
+        filename = os.path.dirname(sys.argv[0]) + r"\pressure_autosave.csv"
         self.dataframe.to_csv(filename, index = True)
         time = datetime.datetime.now().strftime("%H:%M:%S")
         self.status_bar.showMessage(f"Autosave: Guardado [{time}] en {filename}")
@@ -204,9 +206,19 @@ app = QtWidgets.QApplication(sys.argv)
 app.setApplicationName("UI-Presion-INM")
 app.setApplicationDisplayName("Interfaz Sistema de Presion INM")
 
+# [Funcion para la obtencion de rutas relativas]
+def resource_path(relative_path):
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
 # Opciones Esteticas
-app.setWindowIcon(QtGui.QIcon("app_icon.png"))
+icon_path = resource_path("app/resources/app_icon.ico")
+app.setWindowIcon(QtGui.QIcon(icon_path))
 QtWidgets.QApplication.setStyle("Fusion")
+qss_path = resource_path("app/resources/stylesheet.qss")
+style = open(qss_path, "r", encoding="utf-8")
+app.setStyleSheet(style.read())
 
 # Pregunta por puertos inciales
 dialog_selector = module_tools.PortSelector()

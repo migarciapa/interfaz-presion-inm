@@ -11,5 +11,6 @@ X Controles generales del grafico en tiempo
 X Posibilidad de exportar como imagen
 X Alertas y reconeccion de puertos
 X Guardado automatico configurable/por defecto (2min)
-X Opciones esteticas como iconos y fondos
+- Opciones esteticas como iconos y fondos
+- Solicitar retroalimentacion
 - Exportar a un ejecutable

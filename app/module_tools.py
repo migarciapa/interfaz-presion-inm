@@ -75,7 +75,6 @@ class WidgetDisplay(QtWidgets.QWidget):
             self.label_preasure.append(label)
         
         # Ajsutar colores de los label
-        self.label_preasure[0].setStyleSheet("color: black")
         self.label_preasure[1].setStyleSheet("color: red")
         self.label_preasure[2].setStyleSheet("color: green")
         self.label_preasure[3].setStyleSheet("color: blue")

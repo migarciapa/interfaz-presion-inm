@@ -1,0 +1,3 @@
+# Ignorar las carpetas de compilacion y distrubuciones
+build/
+dist/

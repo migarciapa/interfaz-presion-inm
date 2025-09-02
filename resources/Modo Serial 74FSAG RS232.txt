@@ -1,4 +1,0 @@
-- Presiona Counters + Measures para acceder al menu
-- Usar next para anvegar
-- Increase Decrease para cambiar valores
-- Para salir presioanr measures junto con counters por dos segundos. (Presionar measures primero)
