@@ -5,6 +5,7 @@
 # [Librerias de Terceros]
 import os, sys, pyqtgraph, datetime
 import pandas as pd
+import numpy as np
 from PyQt6 import QtCore, QtWidgets, QtGui
 from pyqtgraph import exporters
 
@@ -122,7 +123,10 @@ class MainWindow(QtWidgets.QMainWindow):
         
     # [Funcion handle de señal presion XGS600]
     def handle_preasure(self):
-        data = [self.coms_74FSAG.dict_windows[224].decoded()] + self.coms_XGS600.values_preasure
+        if self.coms_74FSAG.active:
+            data = [self.coms_74FSAG.dict_windows[224].decoded()] + self.coms_XGS600.values_preasure
+        else:
+            data = [np.nan] + self.coms_XGS600.values_preasure
 
         # Añade datos al dataframe
         ts = pd.Timestamp(self.coms_XGS600.timestamp, tz = datetime.datetime.now().astimezone().tzinfo)

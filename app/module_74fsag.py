@@ -4,7 +4,7 @@
 
 # [Librerias de Terceros]
 import sys
-from PyQt6 import QtWidgets, QtSerialPort, QtCore
+from PyQt6 import QtWidgets, QtSerialPort, QtCore, QtGui
 
 # --- COMUNICACION 74FSAG ---
 # Clase backend para comunicaciones y consola del controlador
@@ -171,7 +171,7 @@ class Coms74FSAG(QtWidgets.QWidget):
 
     # [Solicitud lectura de cambios rapidos]
     def read_changes(self):
-        windows = [200, 201, 202, 203, 204, 205, 257, 300, 301, 302]
+        windows = [120, 200, 201, 202, 203, 204, 205, 257, 300, 301, 302]
         for window in windows: self.send_serial(window, False)
 
     # [Solicitud lectura de todas las ventanas disponibles]
@@ -211,6 +211,8 @@ class Widget74FSAG(QtWidgets.QWidget):
         self.spinbox_frequency = QtWidgets.QSpinBox()
         self.spinbox_frequency.setRange(1100, 1167)
         self.spinbox_frequency.setSingleStep(1)
+        self.label_note_frequency = QtWidgets.QLabel("(Rango de frecuencias entre los 1100Hz y 1167Hz)")
+        self.label_note_frequency.setFont(QtGui.QFont("Arial", 6))
         self.combobox_loaded_gas = QtWidgets.QComboBox()
         self.combobox_loaded_gas.addItem("N₂", 0)
         self.combobox_loaded_gas.addItem("Ar₂", 1)
@@ -251,6 +253,7 @@ class Widget74FSAG(QtWidgets.QWidget):
         self.layout_main.addRow(self.button_pump)
         self.layout_main.addRow(self.checkbox_soft_start)
         self.layout_main.addRow("Setetpoint frecuencia [Hz]", self.spinbox_frequency)
+        self.layout_main.addRow(self.label_note_frequency)
         self.layout_main.addRow("Gas cargado", self.combobox_loaded_gas)
         self.layout_main.addRow("Unidades del controlador", self.combobox_units)
         self.layout_main.addRow("Corriente de la bomba", self.label_current)

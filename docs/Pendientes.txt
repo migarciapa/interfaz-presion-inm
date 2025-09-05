@@ -11,6 +11,14 @@ X Controles generales del grafico en tiempo
 X Posibilidad de exportar como imagen
 X Alertas y reconeccion de puertos
 X Guardado automatico configurable/por defecto (2min)
-- Opciones esteticas como iconos y fondos
-- Solicitar retroalimentacion
+X Opciones esteticas como iconos y fondos
 - Exportar a un ejecutable
+- Ocultar visual algunas lineas
+- Advertencia para presion mayor a punto seguro (0.9 Tor = 120Pa)
+X No grafico 74FSAG en caso desconexion
+X Revisar actualizacion datos Setpoint Frecuencia
+- Alerta antes de abrir terminal
+X Explicito rango del setpoint
+X Revisar apariencia de los checkbox
+- Revisar el tema de imagenes (Ultima prioridad)
+- Resumen sobre el software
