@@ -66,37 +66,58 @@ class WidgetDisplay(QtWidgets.QWidget):
         super().__init__()
         self.setWindowTitle("Widget Display")
 
-        # Labels para el display
-        self.label_preasure = []
+        # Labels y chechbox para el display
+        self.label_value = []
+        self.checkbox_show = []
         for i in range(5):
             label = QtWidgets.QLabel("--")
             label.setFont(QtGui.QFont("Courier New", 24, QtGui.QFont.Weight.Bold))
             label.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
-            self.label_preasure.append(label)
+            self.label_value.append(label)
+            checkbox = QtWidgets.QCheckBox()
+            checkbox.setChecked(True)
+            self.checkbox_show.append(checkbox)
         
         # Ajsutar colores de los label
-        self.label_preasure[1].setStyleSheet("color: #FF0000")
-        self.label_preasure[2].setStyleSheet("color: #00FF00")
-        self.label_preasure[3].setStyleSheet("color: #0000FF")
-        self.label_preasure[4].setStyleSheet("color: #FF00FF")
+        self.label_value[1].setStyleSheet("color: #FF0000")
+        self.label_value[2].setStyleSheet("color: #00FF00")
+        self.label_value[3].setStyleSheet("color: #0000FF")
+        self.label_value[4].setStyleSheet("color: #FF00FF")
 
         # Ubicacion de elementos en el layout
-        self.layout_main = QtWidgets.QFormLayout()
+        self.layout_main = QtWidgets.QGridLayout()
+        self.layout_main.setColumnStretch(0, 0)
+        self.layout_main.setColumnStretch(1, 0)
+        self.layout_main.setColumnStretch(2, 1)
         self.setLayout(self.layout_main)
-        self.layout_main.addRow("Sensor 74FS", self.label_preasure[0])
+        self.layout_main.addWidget(self.checkbox_show[0], 0, 0)
+        self.layout_main.addWidget(QtWidgets.QLabel("Sensor 74FS"), 0, 1)
+        self.layout_main.addWidget(self.label_value[0], 0, 2)
         separator = QtWidgets.QFrame()
         separator.setFrameShape(QtWidgets.QFrame.Shape.HLine)
         separator.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
-        self.layout_main.addRow(separator)
-        self.layout_main.addRow("Sensor XGS600 [T1]", self.label_preasure[1])
-        self.layout_main.addRow("Sensor XGS600 [T2]", self.label_preasure[2])
-        self.layout_main.addRow("Sensor XGS600 [T3]", self.label_preasure[3])
-        self.layout_main.addRow("Sensor XGS600 [T4]", self.label_preasure[4])
+        self.layout_main.addWidget(separator, 1, 0, 1, 3)
+        self.layout_main.addWidget(self.checkbox_show[1], 2, 0)
+        self.layout_main.addWidget(self.checkbox_show[2], 3, 0)
+        self.layout_main.addWidget(self.checkbox_show[3], 4, 0)
+        self.layout_main.addWidget(self.checkbox_show[4], 5, 0)
+        self.layout_main.addWidget(QtWidgets.QLabel("Sensor XGS600 [T1]"), 2, 1)
+        self.layout_main.addWidget(QtWidgets.QLabel("Sensor XGS600 [T2]"), 3, 1)
+        self.layout_main.addWidget(QtWidgets.QLabel("Sensor XGS600 [T3]"), 4, 1)
+        self.layout_main.addWidget(QtWidgets.QLabel("Sensor XGS600 [T4]"), 5, 1)
+        self.layout_main.addWidget(self.label_value[1], 2, 2)
+        self.layout_main.addWidget(self.label_value[2], 3, 2)
+        self.layout_main.addWidget(self.label_value[3], 4, 2)
+        self.layout_main.addWidget(self.label_value[4], 5, 2)
 
     # [Funcion para actualizacion de los labels]    
     def update_labels(self, data):
         for idx in range(len(data)):
-            self.label_preasure[idx].setText(str(data[idx]))
+            self.label_value[idx].setText(str(data[idx]))
+
+    # [Funcion get para los valores booleanos de checkbox]
+    def get_visible(self):
+        return [cb.isChecked() for cb in self.checkbox_show]
 
 # --- EJES DE TIEMPO ---
 # Widget para la visulaizacion de medidas de presion
@@ -152,7 +173,7 @@ if __name__ == "__main__":
     QtWidgets.QApplication.setStyle("Fusion")
     
     # Muestra la ventana de herramienta
-    window = WidgetGraphControls()
+    window = WidgetDisplay()
     window.show()
     
     # Salida

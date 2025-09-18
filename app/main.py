@@ -139,7 +139,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.line_plot[1].setData(x, self.dataframe["XGS600_T1"].values)
         self.line_plot[2].setData(x, self.dataframe["XGS600_T2"].values)
         self.line_plot[3].setData(x, self.dataframe["XGS600_T3"].values)
-        self.line_plot[4].setData(x, self.dataframe["XGS600_T4"].values)   
+        self.line_plot[4].setData(x, self.dataframe["XGS600_T4"].values)
+
+        visible = self.widget_display.get_visible()
+        for idx, vis in enumerate(visible):
+            self.line_plot[idx].setVisible(vis)
 
     # [Funcion handle de guardar plot]
     def handle_save_plot(self):

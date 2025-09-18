@@ -314,7 +314,12 @@ class Widget74FSAG(QtWidgets.QWidget):
 
     # [Handle click boton de encendido de la bomba]
     def handle_button_pump(self, state: bool):
-        if state: self.coms.send_serial(000, True, "1")
+        if state:
+            response = QtWidgets.QMessageBox.question(self, "",
+            "ADVERTENCIA. Asegurese de que la presion sea menor al punto seguro (0.9Tor = 120Pa).\n"
+            "¿Esta seguro que desea iniciar la bomba?")
+            if response == QtWidgets.QMessageBox.StandardButton.Yes:
+                self.coms.send_serial(000, True, "1")
         else: self.coms.send_serial(000, True, "0")
         self.coms.send_serial(000, False)
 
