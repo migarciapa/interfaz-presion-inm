@@ -171,7 +171,7 @@ class Coms74FSAG(QtWidgets.QWidget):
 
     # [Solicitud lectura de cambios rapidos]
     def read_changes(self):
-        windows = [120, 200, 201, 202, 203, 204, 205, 257, 300, 301, 302]
+        windows = [000, 100, 120, 157, 200, 201, 202, 203, 204, 205, 257, 300, 301, 302]
         for window in windows: self.send_serial(window, False)
 
     # [Solicitud lectura de todas las ventanas disponibles]

@@ -101,7 +101,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer_read.start(1000)
         self.timer_changes = QtCore.QTimer()
         self.timer_changes.timeout.connect(self.coms_74FSAG.read_changes)
-        self.timer_changes.start(2000)
+        self.timer_changes.start(3000)
         self.timer_autosave = QtCore.QTimer()
         self.timer_autosave.timeout.connect(self.autosave)
         self.timer_autosave.start(120000)
