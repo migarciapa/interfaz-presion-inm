@@ -1,0 +1,43 @@
+---
+config:
+  nodeSpacing: 10
+  rankSpacing: 60
+  layout: dagre
+  theme: redux
+  look: neo
+  themeVariables:
+    fontSize: 20px
+    padding: 1
+---
+flowchart TB
+ subgraph Timers["Timers"]
+        TR[/"(timer_read)"/]
+        TC[/"(timer_changes)"/]
+        TA[/"(timer_autosave)"/]
+  end
+ subgraph User["User"]
+        U[/"Change value in UI or sends console comand"/]
+  end
+ subgraph Disk["Disk"]
+        SAVE["Autosave in CSV (autosave)"]
+  end
+ subgraph Model["Visualization"]
+        PLOT["Update Plot (widget_plot)"]
+        WIDGETS["Update Controller Widgets"]
+        DISPLAY["Update Gauge Display (widget_display)"]
+  end
+    Start(("Startup")) --> PortSel["User Port Selection (PortSelector)"]
+    PortSel --> Init["Main Widget Initilization (MainWindow)"]
+    Init --> TR & TC & TA
+    TR -. Every Xs .-> ReadRut["Request Gauge Values (read_rutine)"]
+    ReadRut --> X_PARSE["Coms XGS600"] & S_PARSE["Coms 74FSAG"]
+    TC -. Every 3s .-> ReadCha["Request Update Values (read_changes)"]
+    ReadCha --> S_PARSE
+    U --> UIWrite["Handle Interaction (various)"]
+    UIWrite --> X_PARSE & S_PARSE
+    X_PARSE -- (signal_presssure) --> DF[["Update Dataframe (DataFrame)"]]
+    S_PARSE -.-> DF
+    DF --> PLOT & DISPLAY
+    DF -.-> SAVE
+    S_PARSE -. "0.5s Request" .-> WIDGETS
+    TA -. Every 120s .-> SAVE

@@ -1,0 +1,89 @@
+---
+config:
+  nodeSpacing: 10
+  rankSpacing: 60
+  layout: dagre
+  theme: redux
+  look: neo
+  themeVariables: {
+    fontSize: 20px,
+    padding: 1,
+    nodePadding: 1
+  }
+---
+flowchart TB
+ subgraph Timers["Timers"]
+        TR[/"(timer_read)"/]
+        TC[/"(timer_changes)"/]
+        TA[/"(timer_autosave)"/]
+  end
+ subgraph User["User"]
+        U[/"Change value in UI or sends console comand"/]
+  end
+ subgraph ComsX["Coms XGS600"]
+        X_SEND["Encode and queue comand (send_serial)"]
+        X_NEXT["Verify if there are comands in queue (next_queue)"]
+        X_WRITE["Send next comand (serial.write)"]
+        X_WAIT["Wait for response (self.waiting = True)"]
+        X_TOUT[/"(timer_response)"/]
+        X_CLEAN["Clean queue (handle_timeout)"]
+        X_REC[/"(recive_serial)"/]
+        X_DEC["Decode message"]
+        X_ERR["Popup Error"]
+        X_PARSE[["Update Values (values_preassure)"]]
+  end
+ subgraph ComsS["Coms 74FSAG"]
+        S_SEND["Encode and queue comand (send_serial)"]
+        S_NEXT["Verify if there are comands in queue (next_queue)"]
+        S_WRITE["Send next comand (serial.write)"]
+        S_WAIT["Wait for response (self.waiting = True)"]
+        S_TOUT[/"(timer_response)"/]
+        S_CLEAN["Clean queue (handle_timeout)"]
+        S_REC[/"(recive_serial)"/]
+        S_DEC["Decode message"]
+        S_ERR["Popup Error"]
+        S_PARSE[["Update Dcitionary (dict_windows)"]]
+  end
+ subgraph Disk["Disk"]
+        SAVE["Autosave in CSV (autosave)"]
+  end
+ subgraph Model["Visualization"]
+        PLOT["Update Plot (widget_plot)"]
+        WIDGETS["Update Controller Widgets"]
+        DISPLAY["Update Gauge Display (widget_display)"]
+  end
+    X_SEND --> X_NEXT
+    X_NEXT -- Comand in queue --> X_WRITE
+    X_WRITE --> X_WAIT
+    X_WAIT -. Timeout .-> X_TOUT
+    X_TOUT --> X_CLEAN
+    X_WAIT -. Complete message recived .-> X_REC
+    X_REC --> X_DEC
+    X_REC -- "Stop timer, waiting=False" --> X_NEXT
+    X_DEC -- Is Error --> X_ERR
+    X_DEC -- Is Data --> X_PARSE
+    S_SEND --> S_NEXT
+    S_NEXT -- Comand in queue --> S_WRITE
+    S_WRITE --> S_WAIT
+    S_WAIT -. Timeout .-> S_TOUT
+    S_TOUT --> S_CLEAN
+    S_WAIT -. Complete message recived .-> S_REC
+    S_REC --> S_DEC
+    S_REC -- "Stop timer, waiting=False" --> S_NEXT
+    S_DEC -- Is Error --> S_ERR
+    S_DEC -- Is Data --> S_PARSE
+    Start(("Startup")) --> PortSel["User Port Selection (PortSelector)"]
+    PortSel --> Init["Main Widget Initilization (MainWindow)"]
+    Init --> TR & TC & TA
+    TR -. Every Xs .-> ReadRut["Request Gauge Values (read_rutine)"]
+    ReadRut --> X_SEND & S_SEND
+    TC -. Every 3s .-> ReadCha["Request Update Values (read_changes)"]
+    ReadCha --> S_SEND
+    U --> UIWrite["Handle Interaction (various)"]
+    UIWrite --> X_SEND & S_SEND
+    X_PARSE -- (signal_presssure) --> DF[["Update Dataframe (DataFrame)"]]
+    S_PARSE -.-> DF
+    DF --> PLOT & DISPLAY
+    DF -.-> SAVE
+    S_PARSE -. "0.5s Request" .-> WIDGETS
+    TA -. Every 120s .-> SAVE
