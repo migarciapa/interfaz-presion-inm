@@ -23,6 +23,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dataframe = pd.DataFrame(
             columns = ["TT_74FS", "XGS600_T1", "XGS600_T2", "XGS600_T3", "XGS600_T4"],
             index = pd.DatetimeIndex([], tz = datetime.datetime.now().astimezone().tzinfo))
+        
+        # Direccion de guardado
+        self.file_path = os.path.dirname(sys.argv[0]) + r"\pressure_autosave.csv"
+        self.file_format = "CSV"
 
         # Widgets preconfigurados
         self.coms_74FSAG = module_74fsag.Coms74FSAG(ports[0])
@@ -106,20 +110,40 @@ class MainWindow(QtWidgets.QMainWindow):
         self.timer_autosave.timeout.connect(self.autosave)
         self.timer_autosave.start(120000)
     
+    # [Funcion general de guardado]
+    def save_data(self, file_path, format = ""):
+        if not file_path: return False
+        if format.startswith("CSV") or file_path.lower().endswith(".csv"):
+            if not file_path.lower().endswith(".csv"):
+                file_path += ".csv"
+            self.dataframe.to_csv(file_path, index=True)
+        elif format.startswith("Excel") or file_path.lower().endswith(".xlsx"):
+            if not file_path.lower().endswith(".xlsx"):
+                file_path += ".xlsx"
+            df = self.dataframe.copy()
+            df.index = df.index.tz_localize(None)
+            df.to_excel(file_path, index=True)
+        elif format.startswith("XML") or file_path.lower().endswith(".xml"):
+            if not file_path.lower().endswith(".xml"):
+                file_path += ".xml"
+            self.dataframe.to_xml(file_path, index=True)
+        return True
+    
     # [Funcion del timer de lectura]
     def read_rutine(self):
         self.coms_XGS600.send_serial("0F")
         self.coms_74FSAG.send_serial(224, False)
-    
+
     # [Funcion del timer de autoguardado]
     def autosave(self):
         if self.dataframe.empty:
             self.status_bar.showMessage("Autosave: No hay datos en el grafico")
             return
-        filename = os.path.dirname(sys.argv[0]) + r"\pressure_autosave.csv"
-        self.dataframe.to_csv(filename, index = True)
-        time = datetime.datetime.now().strftime("%H:%M:%S")
-        self.status_bar.showMessage(f"Autosave: Guardado [{time}] en {filename}")
+        if self.save_data(self.file_path):
+            time = datetime.datetime.now().strftime("%H:%M:%S")
+            self.status_bar.showMessage(f"Autosave: Guardado [{time}] en {self.file_path}")
+        else:
+            self.status_bar.showMessage("Autosave: No se pudo guardar los datos")
         
     # [Funcion handle de señal presion XGS600]
     def handle_preasure(self):
@@ -152,27 +176,16 @@ class MainWindow(QtWidgets.QMainWindow):
             return
         
         # Abre dialogo de guaradado con opciones de formato
-        file_path, format = QtWidgets.QFileDialog.getSaveFileName(self, "Guardar datos", "",
-            "CSV (*.csv);;Excel (*.xlsx);;XML (*.xml)")
+        path, format = QtWidgets.QFileDialog.getSaveFileName(self,
+            "Guardar datos", "", "CSV (*.csv);;Excel (*.xlsx);;XML (*.xml)")
         
         # Procesado del guardado
-        if not file_path: return
+        if not path: return
+        self.file_path = path
+        self.file_format = format
         try:
-            if format.startswith("CSV") or file_path.lower().endswith(".csv"):
-                if not file_path.lower().endswith(".csv"):
-                    file_path += ".csv"
-                self.dataframe.to_csv(file_path, index=True)
-            elif format.startswith("Excel") or file_path.lower().endswith(".xlsx"):
-                if not file_path.lower().endswith(".xlsx"):
-                    file_path += ".xlsx"
-                df = self.dataframe.copy()
-                df.index = df.index.tz_localize(None)
-                df.to_excel(file_path, index=True)
-            elif format.startswith("XML") or file_path.lower().endswith(".xml"):
-                if not file_path.lower().endswith(".xml"):
-                    file_path += ".xml"
-                self.dataframe.to_xml(file_path, index=True)
-            QtWidgets.QMessageBox.information(self, "", f"Archivo guardado en:\n{file_path}")
+            if self.save_data(self.file_path, self.file_format):
+                QtWidgets.QMessageBox.information(self, "", f"Archivo guardado en:\n{self.file_path}")
         except Exception as e:
             QtWidgets.QMessageBox.critical(self, "", f"No se pudo guardar el archivo:\n{e}")
 
